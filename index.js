@@ -65,6 +65,19 @@ async function run() {
       res.send({ token });
     });
 
+    // verify Admin ==============
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "admin") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+      next();
+    };
+
     // verify Instructor ==============
     const verifyInstructor = async (req, res, next) => {
       const email = req.decoded.email;
@@ -150,9 +163,51 @@ async function run() {
     /*
     Class Related apis =========================
     */
+    app.get("/classes", verifyJWT, verifyAdmin, async (req, res) => {
+      const result = await classesCollection.find().toArray();
+      res.send(result);
+    });
+    app.get("/classes", verifyJWT, verifyInstructor, async (req, res) => {
+      const email = req.query.email;
+
+      if (!email) {
+        return res.send([]);
+      }
+      const decodedEmail = req.decoded.email;
+      // console.log(decodedEmail, "160");
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "Forbidden access" });
+      }
+      const query = { instructor_email: email };
+      // console.log(query);
+      const result = await classesCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/classes/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await classesCollection.findOne(filter);
+      res.send(result);
+    });
     app.post("/classes", verifyJWT, verifyInstructor, async (req, res) => {
       const newClass = req.body;
       const result = await classesCollection.insertOne(newClass);
+      res.send(result);
+    });
+
+    app.patch("/classes/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const updatedClassData = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedClass = {
+        $set: {
+          seats: updatedClassData.seats,
+          price: updatedClassData.price,
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updatedClass);
       res.send(result);
     });
 
