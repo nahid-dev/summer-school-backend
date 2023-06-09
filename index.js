@@ -54,6 +54,7 @@ async function run() {
 
     //   All Collection here: ==============
     const usersCollection = client.db("drawingSchool").collection("users");
+    const classesCollection = client.db("drawingSchool").collection("classes");
 
     // JWT API==============
     app.post("/jwt", (req, res) => {
@@ -64,13 +65,26 @@ async function run() {
       res.send({ token });
     });
 
+    // verify Instructor ==============
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "instructor") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+      next();
+    };
+
     //   All users api here ================
     app.get("/users", verifyJWT, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
 
-    // User admin api
+    // User admin api==============
     app.get("/users/admin/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
 
@@ -84,7 +98,7 @@ async function run() {
       res.send(result);
     });
 
-    // User instructor api
+    // User instructor api==============
     app.get("/users/instructor/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
 
@@ -130,6 +144,15 @@ async function run() {
         },
       };
       const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    /*
+    Class Related apis =========================
+    */
+    app.post("/classes", verifyJWT, verifyInstructor, async (req, res) => {
+      const newClass = req.body;
+      const result = await classesCollection.insertOne(newClass);
       res.send(result);
     });
 
