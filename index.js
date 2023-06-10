@@ -163,7 +163,7 @@ async function run() {
     /*
     Class Related apis =========================
     */
-    app.get("/classes", verifyJWT, verifyAdmin, async (req, res) => {
+    app.get("/adminClasses", verifyJWT, verifyAdmin, async (req, res) => {
       const result = await classesCollection.find().toArray();
       res.send(result);
     });
@@ -191,6 +191,12 @@ async function run() {
       const result = await classesCollection.findOne(filter);
       res.send(result);
     });
+    app.get("/classesFeedback/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await classesCollection.findOne(filter);
+      res.send(result);
+    });
     app.post("/classes", verifyJWT, verifyInstructor, async (req, res) => {
       const newClass = req.body;
       const result = await classesCollection.insertOne(newClass);
@@ -208,6 +214,49 @@ async function run() {
         },
       };
       const result = await classesCollection.updateOne(filter, updatedClass);
+      res.send(result);
+    });
+
+    app.patch("/classesApprove/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "approve",
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    app.patch("/classesDeny/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "deny",
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    app.patch("/classFeedback/:id", async (req, res) => {
+      const id = req.params.id;
+      const feedbackData = req.body;
+      // console.log(feedbackData);
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          feedback: feedbackData.feedback,
+        },
+      };
+      const result = await classesCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
       res.send(result);
     });
 
