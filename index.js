@@ -55,6 +55,9 @@ async function run() {
     //   All Collection here: ==============
     const usersCollection = client.db("drawingSchool").collection("users");
     const classesCollection = client.db("drawingSchool").collection("classes");
+    const selectedClassCollection = client
+      .db("drawingSchool")
+      .collection("selectedClass");
 
     // JWT API==============
     app.post("/jwt", (req, res) => {
@@ -263,6 +266,43 @@ async function run() {
         updateDoc,
         options
       );
+      res.send(result);
+    });
+
+    // Selected Class Related Apis ===============
+    app.get("/selectedClass", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+
+      if (!email) {
+        return res.send([]);
+      }
+      const decodedEmail = req.decoded.email;
+      // console.log(decodedEmail, "160");
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "Forbidden access" });
+      }
+      const query = { email: email };
+      // console.log(query);
+      const result = await selectedClassCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/classPayment/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await selectedClassCollection.findOne(filter);
+      res.send(result);
+    });
+    app.post("/selectedClass", async (req, res) => {
+      const item = req.body;
+      const result = await selectedClassCollection.insertOne(item);
+      res.send(result);
+    });
+    app.delete("/selectedClass/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await selectedClassCollection.deleteOne(query);
       res.send(result);
     });
 
