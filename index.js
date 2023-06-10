@@ -163,10 +163,16 @@ async function run() {
     /*
     Class Related apis =========================
     */
+    app.get("/allClasses", async (req, res) => {
+      const query = { status: "approve" };
+      const result = await classesCollection.find(query).toArray();
+      res.send(result);
+    });
     app.get("/adminClasses", verifyJWT, verifyAdmin, async (req, res) => {
       const result = await classesCollection.find().toArray();
       res.send(result);
     });
+
     app.get("/classes", verifyJWT, verifyInstructor, async (req, res) => {
       const email = req.query.email;
 
