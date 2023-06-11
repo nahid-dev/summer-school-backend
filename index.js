@@ -311,6 +311,24 @@ async function run() {
     });
 
     // PAYMENT RELATED APIs
+    app.get("/enrolledClasses", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+
+      if (!email) {
+        return res.send([]);
+      }
+      const decodedEmail = req.decoded.email;
+      // console.log(decodedEmail, "160");
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "Forbidden access" });
+      }
+      const query = { email: email };
+      // console.log(query);
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    });
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const { price } = req.body;
       const amount = price * 100;
