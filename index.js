@@ -3,6 +3,7 @@ const app = express();
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 // middleWere
@@ -55,6 +56,9 @@ async function run() {
     //   All Collection here: ==============
     const usersCollection = client.db("drawingSchool").collection("users");
     const classesCollection = client.db("drawingSchool").collection("classes");
+    const paymentCollection = client
+      .db("drawingSchool")
+      .collection("paymentClasses");
     const selectedClassCollection = client
       .db("drawingSchool")
       .collection("selectedClass");
@@ -304,6 +308,49 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await selectedClassCollection.deleteOne(query);
       res.send(result);
+    });
+
+    // PAYMENT RELATED APIs
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    app.post("/payments", verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const insertResult = await paymentCollection.insertOne(payment);
+
+      const query = { _id: new ObjectId(payment.paymentClassId) };
+      const deleteResult = await selectedClassCollection.deleteOne(query);
+
+      const filter = { _id: new ObjectId(payment.classId) };
+      const existingClass = await classesCollection.findOne(filter);
+
+      if (existingClass) {
+        const updatedSeats = existingClass.seats - 1;
+
+        const updateDoc = {
+          $set: {
+            seats: updatedSeats,
+          },
+        };
+
+        const updateResult = await classesCollection.updateOne(
+          filter,
+          updateDoc
+        );
+        res.send({ insertResult, deleteResult, updateResult });
+      } else {
+        res.status(404).send("Class not found");
+      }
     });
 
     // Send a ping to confirm a successful connection
