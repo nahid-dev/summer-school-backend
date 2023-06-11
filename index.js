@@ -132,6 +132,13 @@ async function run() {
       res.send(result);
     });
 
+    // Instructor api for instructor page: =============
+    app.get("/allInstructor", async (req, res) => {
+      const query = { role: "instructor" };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -329,6 +336,29 @@ async function run() {
       const result = await paymentCollection.find(query).toArray();
       res.send(result);
     });
+
+    app.get("/paymentHistory", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+
+      if (!email) {
+        return res.send([]);
+      }
+      const decodedEmail = req.decoded.email;
+      // console.log(decodedEmail, "160");
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "Forbidden access" });
+      }
+      const query = { email: email };
+      // console.log(query);
+      const result = await paymentCollection
+        .find(query)
+        .sort({ date: -1 })
+        .toArray();
+      res.send(result);
+    });
+
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const { price } = req.body;
       const amount = price * 100;
