@@ -354,10 +354,12 @@ async function run() {
 
       if (existingClass) {
         const updatedSeats = existingClass.seats - 1;
+        const updateEnrolled = existingClass.enrolled_students + 1;
 
         const updateDoc = {
           $set: {
             seats: updatedSeats,
+            enrolled_students: updateEnrolled,
           },
         };
 
