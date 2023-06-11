@@ -51,7 +51,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     //   All Collection here: ==============
     const usersCollection = client.db("drawingSchool").collection("users");
@@ -180,6 +180,14 @@ async function run() {
     app.get("/allClasses", async (req, res) => {
       const query = { status: "approve" };
       const result = await classesCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/topClasses", async (req, res) => {
+      const query = { status: "approve" };
+      const result = await classesCollection
+        .find(query)
+        .sort({ enrolled_students: -1 })
+        .toArray();
       res.send(result);
     });
     app.get("/adminClasses", verifyJWT, verifyAdmin, async (req, res) => {
