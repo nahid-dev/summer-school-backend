@@ -202,7 +202,7 @@ async function run() {
         return res.send([]);
       }
       const decodedEmail = req.decoded.email;
-      // console.log(decodedEmail, "160");
+
       if (email !== decodedEmail) {
         return res
           .status(403)
@@ -380,6 +380,7 @@ async function run() {
       });
     });
 
+    // MAIN PAYMENT AND UPDATE SERVER: ===========
     app.post("/payments", verifyJWT, async (req, res) => {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
