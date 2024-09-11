@@ -225,6 +225,7 @@ async function run() {
       const result = await classesCollection.findOne(filter);
       res.send(result);
     });
+
     app.post("/classes", verifyJWT, verifyInstructor, async (req, res) => {
       const newClass = req.body;
       const result = await classesCollection.insertOne(newClass);
@@ -411,8 +412,6 @@ async function run() {
         res.status(404).send("Class not found");
       }
     });
-
-    // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
